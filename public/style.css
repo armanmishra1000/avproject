@@ -1,11 +1,33 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #111;
-}
-canvas {
-  background: #222;
-}
+#controls {
+    text-align: center;
+    margin-top: 20px;
+  }
+  #controls input,
+  #controls button {
+    font-size: 18px;
+    padding: 8px 12px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 4px;
+  }
+  #controls input {
+    width: 80px;
+    text-align: right;
+  }
+  #controls button {
+    background: #0f0;
+    color: #111;
+    cursor: pointer;
+  }
+  #controls button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  #message {
+    text-align: center;
+    font-size: 20px;
+    color: #0f0;
+    margin-top: 10px;
+    min-height: 1.2em;
+  }
+  

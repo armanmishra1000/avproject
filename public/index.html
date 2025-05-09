@@ -9,6 +9,13 @@
 <body>
   <canvas id="gameCanvas" width="800" height="400"></canvas>
 
+  <div id="controls">
+    <input id="betAmount" type="number" value="1.00" min="0.01" step="0.01" />
+    <button id="betButton">Bet</button>
+    <button id="cashOutButton" disabled>Cash Out</button>
+  </div>
+  <div id="message"></div>
+
   <!-- Socket.IO client -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>
