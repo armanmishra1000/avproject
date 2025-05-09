@@ -1,57 +1,73 @@
+// public/main.js
+
 const socket = io();
 
+// 1×–10× at 0.0002 per ms → full diagonal takes 45 000 ms (45 s)
 const MULTIPLIER_SPEED = 0.0002;
+const MAX_CRASH_MULT    = 10;
+const PLANE_DURATION    = (MAX_CRASH_MULT - 1) / MULTIPLIER_SPEED;
 
+//
 // State
+//
 let targetMultiplier = 1;
-let crashTimeLocal = 0;
-let crashHappened = false;
-let startTime = 0;
-let betPlaced = false;
-let cashedOut = false;
+let crashHappened    = false;
+let startTime        = 0;
+
+// Betting state
+let betPlaced  = false;
+let cashedOut  = false;
 let cashOutMult = 1;
 
+//
 // Canvas
+//
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx    = canvas.getContext('2d');
 
-// Controls
+//
+// UI Controls
+//
 const betInput = document.getElementById('betAmount');
 const betBtn   = document.getElementById('betButton');
 const cashBtn  = document.getElementById('cashOutButton');
 const message  = document.getElementById('message');
 
-// Plane image (assumes plane.svg in /images)
+//
+// Load plane SVG
+//
 const planeImg = new Image();
 planeImg.src = '/images/plane.svg';
 
-// Draw Loop
-function drawLoop(ts) {
-  if (!startTime) startTime = ts;
-  const elapsed = ts - startTime;
+//
+// Draw loop
+//
+function drawLoop(timestamp) {
+  if (!startTime) startTime = timestamp;
+  const elapsed = timestamp - startTime;
 
-  // Multiplier calculation
+  // Calculate and cap the multiplier
   let mult = 1 + elapsed * MULTIPLIER_SPEED;
   if (mult > targetMultiplier) mult = targetMultiplier;
 
   // Clear
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw multiplier
-  ctx.font = '30px Arial';
+  // Draw multiplier text
+  ctx.font      = '30px Arial';
   ctx.fillStyle = '#0f0';
   ctx.fillText(mult.toFixed(2) + '×', 20, 50);
 
-  // Draw plane
-  const progress = Math.min(elapsed / crashTimeLocal, 1);
+  // Compute plane position on a fixed diagonal path
+  const prog = Math.min(elapsed / PLANE_DURATION, 1);
   const planeW = 40, planeH = 20;
-  const x = progress * (canvas.width - planeW);
-  const y = canvas.height/2 - planeH/2;
+  const x = prog * (canvas.width  - planeW);
+  const y = (canvas.height - planeH) * (1 - prog);
   if (planeImg.complete) {
     ctx.drawImage(planeImg, x, y, planeW, planeH);
   }
 
-  // Continue or crash text
+  // Continue or crash
   if (!crashHappened) {
     requestAnimationFrame(drawLoop);
   } else {
@@ -59,13 +75,14 @@ function drawLoop(ts) {
   }
 }
 
-// Socket events
+//
+// WebSocket events
+//
 socket.on('connect', () => console.log('🔗 Connected as', socket.id));
 
 socket.on('round_start', data => {
-  // Reset state & UI
+  // Reset state & UI for new round
   targetMultiplier = data.crashMultiplier;
-  crashTimeLocal   = (targetMultiplier - 1) / MULTIPLIER_SPEED;
   crashHappened    = false;
   startTime        = 0;
   betPlaced        = false;
@@ -73,7 +90,6 @@ socket.on('round_start', data => {
   cashOutMult      = 1;
   message.textContent = '';
 
-  // Buttons
   betBtn.disabled  = false;
   cashBtn.disabled = true;
 
@@ -82,28 +98,30 @@ socket.on('round_start', data => {
 
 socket.on('round_crash', () => {
   crashHappened = true;
-  // If user didn’t cash out, they lose
+  // If user never cashed out, they lose
   if (betPlaced && !cashedOut) {
     message.textContent = '💥 You lost your bet';
   }
 });
 
-// Bet button handler
+//
+// Betting & Cash-Out handlers
+//
 betBtn.addEventListener('click', () => {
+  if (betPlaced) return;
   betPlaced = true;
   betBtn.disabled  = true;
   cashBtn.disabled = false;
   message.textContent = `🕒 Betting $${parseFloat(betInput.value).toFixed(2)}`;
 });
 
-// Cash-out button handler
 cashBtn.addEventListener('click', () => {
   if (!betPlaced || cashedOut || crashHappened) return;
-  // Determine current multiplier
-  const now = performance.now();
+  // Calculate current multiplier at cash-out
+  const now     = performance.now();
   const elapsed = now - startTime;
-  cashOutMult = Math.min(1 + elapsed * MULTIPLIER_SPEED, targetMultiplier);
-  cashedOut = true;
+  cashOutMult   = Math.min(1 + elapsed * MULTIPLIER_SPEED, targetMultiplier);
+  cashedOut     = true;
   cashBtn.disabled = true;
   message.textContent = `✅ Cashed out at ${cashOutMult.toFixed(2)}×`;
 });
