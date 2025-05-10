@@ -1,33 +1,88 @@
-#controls {
-    text-align: center;
-    margin-top: 20px;
-  }
-  #controls input,
-  #controls button {
-    font-size: 18px;
-    padding: 8px 12px;
-    margin: 0 5px;
-    border: none;
-    border-radius: 4px;
-  }
-  #controls input {
-    width: 80px;
-    text-align: right;
-  }
-  #controls button {
-    background: #0f0;
-    color: #111;
-    cursor: pointer;
-  }
-  #controls button:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-  #message {
-    text-align: center;
-    font-size: 20px;
-    color: #0f0;
-    margin-top: 10px;
-    min-height: 1.2em;
-  }
-  
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body & Layout */
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #111;
+  color: #0f0;
+  font-family: Arial, sans-serif;
+}
+
+/* Canvas container & styling */
+canvas {
+  background: #222;
+  border-radius: 8px;
+  max-width: 100%;
+}
+
+/* Tabs */
+#modeTabs {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+#modeTabs button {
+  background: #222;
+  color: #0f0;
+  border: 1px solid #0f0;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+}
+#modeTabs button.active {
+  background: #0f0;
+  color: #111;
+}
+
+/* Controls wrapper */
+.controls {
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Inputs & buttons (both manual & auto) */
+.controls input,
+.controls button {
+  font-size: 18px;
+  padding: 8px 12px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 4px;
+  outline: none;
+}
+
+/* Number inputs */
+.controls input {
+  width: 80px;
+  text-align: right;
+  background: #fff;
+  color: #111;
+}
+
+/* Buttons */
+.controls button {
+  background: #0f0;
+  color: #111;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.controls button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Message below controls */
+#message {
+  margin-top: 10px;
+  min-height: 1.2em;
+  font-size: 20px;
+}
