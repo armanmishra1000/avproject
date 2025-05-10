@@ -4,10 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aviator Crash Game</title>
-  <!-- Ensure this path is correct and the file is named style.css -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Balance & navigation -->
+  <div id="balanceBoard">
+    Balance: $<span id="balanceValue">0.00</span>
+    &nbsp;|&nbsp;
+    <a href="/dashboard">Dashboard</a>
+    &nbsp;|&nbsp;
+    <a href="/logout">Logout</a>
+  </div>
+
   <!-- Game Canvas -->
   <canvas id="gameCanvas" width="800" height="400"></canvas>
 

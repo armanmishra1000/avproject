@@ -17,6 +17,20 @@ body {
   font-family: Arial, sans-serif;
 }
 
+/* Balance bar */
+#balanceBoard {
+  margin-bottom: 10px;
+  font-size: 18px;
+  text-align: center;
+}
+#balanceBoard a {
+  color: #0f0;
+  text-decoration: none;
+}
+#balanceBoard a:hover {
+  text-decoration: underline;
+}
+
 /* Canvas container & styling */
 canvas {
   background: #222;
