@@ -5,10 +5,10 @@ const http          = require('http');
 const path          = require('path');
 const session       = require('express-session');
 const SQLiteStore   = require('connect-sqlite3')(session);
-const bcrypt        = require('bcrypt');
 const { Server }    = require('socket.io');
 const db            = require('./data/database');
 const { logEvent, httpLogger } = require('./middleware/logger');
+const authRouter    = require('./routes/auth');
 
 const app    = express();
 const server = http.createServer(app);
@@ -39,68 +39,8 @@ io.use((socket, next) => {
 // ——— Serve static files ———
 app.use(express.static('public'));
 
-// ——— Authentication Routes ———
-
-// Registration page
-app.get('/register', (req, res) => {
-  logEvent({ type: 'route', route: '/register [GET]', userId: req.session.userId || null });
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-app.post('/register', async (req, res) => {
-  logEvent({ type: 'route', route: '/register [POST]', userId: null, body: { username: req.body.username } });
-  const { username, password } = req.body;
-  if (!username || !password) return res.redirect('/register');
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    db.run(
-      `INSERT INTO users (username, password, balance) VALUES (?, ?, 0)`,
-      [username, hash],
-      err => {
-        if (err) {
-          logEvent({ type: 'error', context: 'register', error: err.message });
-          return res.redirect('/register');
-        }
-        res.redirect('/login');
-      }
-    );
-  } catch (e) {
-    logEvent({ type: 'error', context: 'register', error: e.message });
-    res.redirect('/register');
-  }
-});
-
-// Login page
-app.get('/login', (req, res) => {
-  logEvent({ type: 'route', route: '/login [GET]', userId: req.session.userId || null });
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-app.post('/login', (req, res) => {
-  logEvent({ type: 'route', route: '/login [POST]', userId: null, body: { username: req.body.username } });
-  const { username, password } = req.body;
-  db.get(
-    `SELECT id, password FROM users WHERE username = ?`,
-    [username],
-    async (err, user) => {
-      if (err || !user) {
-        logEvent({ type: 'error', context: 'login', error: err?.message || 'no user' });
-        return res.redirect('/login');
-      }
-      const ok = await bcrypt.compare(password, user.password);
-      if (!ok) {
-        logEvent({ type: 'error', context: 'login', error: 'invalid password', userId: user.id });
-        return res.redirect('/login');
-      }
-      req.session.userId = user.id;
-      res.redirect('/');
-    }
-  );
-});
-
-// Logout
-app.get('/logout', (req, res) => {
-  logEvent({ type: 'route', route: '/logout [GET]', userId: req.session.userId || null });
-  req.session.destroy(() => res.redirect('/login'));
-});
+// ——— Mount auth routes (register, login, logout) ———
+app.use(authRouter);
 
 // ——— Protect Routes ———
 function ensureAuth(req, res, next) {
@@ -111,7 +51,7 @@ function ensureAuth(req, res, next) {
   next();
 }
 
-// Game & Dashboard pages
+// ——— Game & Dashboard pages ———
 app.get('/', ensureAuth, (req, res) => {
   logEvent({ type: 'route', route: '/ [GET]', userId: req.session.userId });
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -149,7 +89,7 @@ app.post('/api/deposit', ensureAuth, (req, res) => {
   );
 });
 
-// ——— Client-side log endpoint ———
+// ——— Client-side logging endpoint ———
 app.post('/api/log', ensureAuth, (req, res) => {
   logEvent({ type: 'client', userId: req.session.userId, details: req.body });
   res.sendStatus(200);
