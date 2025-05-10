@@ -127,13 +127,55 @@ io.on('connection', socket => {
   }
   console.log(`→ User ${userId} connected via socket ${socket.id}`);
 
-  // TODO: handle real bets on 'place_bet' and 'cash_out' events here,
-  // using `userId` to debit/credit and record each bet in the database.
+  // Handle incoming bet
+  socket.on('place_bet', data => {
+    const amount = parseFloat(data.amount);
+    if (isNaN(amount) || amount <= 0) {
+      socket.emit('bet_response', { success: false, error: 'Invalid bet amount' });
+      return;
+    }
+    // Debit balance
+    db.run(
+      'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
+      [amount, userId, amount],
+      function(err) {
+        if (err || this.changes === 0) {
+          socket.emit('bet_response', { success: false, error: 'Insufficient funds' });
+        } else {
+          socket.emit('bet_response', { success: true });
+        }
+      }
+    );
+  });
+
+  // Handle cash out
+  socket.on('cash_out', data => {
+    const multiplier = parseFloat(data.multiplier);
+    const betAmount  = parseFloat(data.amount);
+    if (isNaN(multiplier) || isNaN(betAmount) || multiplier <= 1) {
+      socket.emit('cash_response', { success: false, error: 'Invalid cash-out data' });
+      return;
+    }
+    const winnings = betAmount * (multiplier - 1);
+    // Credit winnings
+    db.run(
+      'UPDATE users SET balance = balance + ? WHERE id = ?',
+      [winnings, userId],
+      err => {
+        if (err) {
+          socket.emit('cash_response', { success: false, error: 'DB error' });
+        } else {
+          socket.emit('cash_response', { success: true, winnings });
+        }
+      }
+    );
+  });
 
   socket.on('disconnect', () => {
     console.log(`← User ${userId} disconnected`);
   });
 });
+
 
 // ——— Crash Game Loop ———
 function startRound() {
