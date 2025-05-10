@@ -3,5 +3,3 @@ node_modules/
 .env
 EOF
 
-git add .gitignore
-git commit -m "Add .gitignore"
