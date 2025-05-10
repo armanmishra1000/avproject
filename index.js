@@ -3,29 +3,16 @@
 const express       = require('express');
 const http          = require('http');
 const path          = require('path');
-const fs            = require('fs');
 const session       = require('express-session');
 const SQLiteStore   = require('connect-sqlite3')(session);
 const bcrypt        = require('bcrypt');
 const { Server }    = require('socket.io');
 const db            = require('./data/database');
+const { logEvent, httpLogger } = require('./middleware/logger');
 
 const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server);
-
-// ——— Setup logging ———
-const logDir     = path.join(__dirname, 'data');
-const logPath    = path.join(logDir, 'activity.log');
-// ensure data/ exists
-if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
-// helper: append JSON line
-function logEvent(evt) {
-  const line = JSON.stringify({ ...evt, ts: new Date().toISOString() }) + '\n';
-  fs.appendFile(logPath, line, err => {
-    if (err) console.error('Log write error:', err);
-  });
-}
 
 // ——— Body parsing ———
 app.use(express.urlencoded({ extended: true }));
@@ -33,25 +20,16 @@ app.use(express.json());
 
 // ——— Session middleware ———
 const sessionMiddleware = session({
-  store: new SQLiteStore({ dir: logDir, db: 'sessions.sqlite' }),
-  secret: 'your-secure-secret-here',
+  store: new SQLiteStore({ dir: path.join(__dirname, 'data'), db: 'sessions.sqlite' }),
+  secret: 'your-secure-secret-here', // TODO: move to environment variable
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 }
+  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 day
 });
 app.use(sessionMiddleware);
 
 // ——— HTTP request logging ———
-app.use((req, res, next) => {
-  logEvent({
-    type: 'http',
-    userId: req.session.userId || null,
-    method: req.method,
-    url: req.originalUrl,
-    ip: req.ip
-  });
-  next();
-});
+app.use(httpLogger);
 
 // ——— Share sessions with Socket.IO ———
 io.use((socket, next) => {
@@ -65,13 +43,12 @@ app.use(express.static('public'));
 
 // Registration page
 app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
   logEvent({ type: 'route', route: '/register [GET]', userId: req.session.userId || null });
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
-// Handle registration
 app.post('/register', async (req, res) => {
+  logEvent({ type: 'route', route: '/register [POST]', userId: null, body: { username: req.body.username } });
   const { username, password } = req.body;
-  logEvent({ type: 'route', route: '/register [POST]', userId: null, body: { username } });
   if (!username || !password) return res.redirect('/register');
   try {
     const hash = await bcrypt.hash(password, 10);
@@ -94,13 +71,12 @@ app.post('/register', async (req, res) => {
 
 // Login page
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
   logEvent({ type: 'route', route: '/login [GET]', userId: req.session.userId || null });
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
-// Handle login
 app.post('/login', (req, res) => {
+  logEvent({ type: 'route', route: '/login [POST]', userId: null, body: { username: req.body.username } });
   const { username, password } = req.body;
-  logEvent({ type: 'route', route: '/login [POST]', userId: null, body: { username } });
   db.get(
     `SELECT id, password FROM users WHERE username = ?`,
     [username],
@@ -135,7 +111,7 @@ function ensureAuth(req, res, next) {
   next();
 }
 
-// Game & dashboard pages
+// Game & Dashboard pages
 app.get('/', ensureAuth, (req, res) => {
   logEvent({ type: 'route', route: '/ [GET]', userId: req.session.userId });
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -180,7 +156,7 @@ app.post('/api/log', ensureAuth, (req, res) => {
 });
 
 // ——— Game logic & socket events ———
-const MULTIPLIER_SPEED = 0.0002;
+const MULTIPLIER_SPEED  = 0.0002;
 const PAUSE_AFTER_CRASH = 5000;
 
 io.on('connection', socket => {
@@ -188,7 +164,6 @@ io.on('connection', socket => {
   if (!userId) return socket.disconnect();
   logEvent({ type: 'socket', event: 'connect', userId, socketId: socket.id });
 
-  // place_bet
   socket.on('place_bet', data => {
     logEvent({ type: 'socket', event: 'place_bet', userId, data });
     const amount = parseFloat(data.amount);
@@ -208,7 +183,6 @@ io.on('connection', socket => {
     );
   });
 
-  // cash_out
   socket.on('cash_out', data => {
     logEvent({ type: 'socket', event: 'cash_out', userId, data });
     const multiplier = parseFloat(data.multiplier);
