@@ -4,44 +4,70 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aviator Crash Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <!-- Balance & navigation -->
-  <div id="balanceBoard">
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-green-500 font-sans">
+
+  <!-- Balance & nav -->
+  <div id="balanceBoard" class="mb-4 text-lg">
     Balance: $<span id="balanceValue">0.00</span>
-    &nbsp;|&nbsp;
-    <a href="/dashboard">Dashboard</a>
-    &nbsp;|&nbsp;
-    <a href="/logout">Logout</a>
+    <a href="/dashboard" class="mx-2 hover:underline">Dashboard</a>
+    <a href="/logout" class="hover:underline">Logout</a>
   </div>
 
+  <!-- Crash history -->
+  <div id="history" class="flex space-x-2 mb-4"></div>
+
   <!-- Game Canvas -->
-  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <canvas id="gameCanvas"
+          width="800" height="400"
+          class="bg-gray-800 rounded-lg max-w-full"></canvas>
 
   <!-- Mode Tabs -->
-  <div id="modeTabs">
-    <button id="tabManual" class="active">Manual</button>
-    <button id="tabAuto">Auto</button>
+  <div id="modeTabs" class="flex mt-6">
+    <button id="tabManual"
+            class="px-4 py-2 border border-green-500 rounded-l-lg bg-gray-800 hover:bg-green-600 active:bg-green-700">
+      Manual
+    </button>
+    <button id="tabAuto"
+            class="px-4 py-2 border border-green-500 rounded-r-lg bg-gray-800 hover:bg-green-600 active:bg-green-700">
+      Auto
+    </button>
   </div>
 
   <!-- Manual Controls -->
-  <div id="manualControls" class="controls">
-    <input id="betAmount" type="number" value="1.00" min="0.01" step="0.01" />
-    <button id="betButton">Bet</button>
-    <button id="cashOutButton" disabled>Cash Out</button>
+  <div id="manualControls" class="controls mt-4 text-center">
+    <input id="betAmount" type="number" value="1.00" min="0.01" step="0.01"
+           class="w-20 text-right px-2 py-1 rounded bg-white text-black" />
+    <button id="betButton"
+            class="px-4 py-2 mx-2 rounded bg-green-500 text-black hover:bg-green-600">
+      Bet
+    </button>
+    <button id="cashOutButton" disabled
+            class="px-4 py-2 rounded bg-green-500 text-black opacity-50 cursor-not-allowed">
+      Cash Out
+    </button>
   </div>
 
   <!-- Auto Controls -->
-  <div id="autoControls" class="controls" style="display:none">
-    <input id="autoBetAmount" type="number" value="1.00" min="0.01" step="0.01" />
-    <input id="autoCashTarget" type="number" value="2.00" min="1.01" step="0.01" />
-    <button id="startAuto">Start Auto</button>
-    <button id="stopAuto" disabled>Stop Auto</button>
+  <div id="autoControls" class="controls mt-4 text-center hidden">
+    <input id="autoBetAmount" type="number" value="1.00" min="0.01" step="0.01"
+           class="w-20 text-right px-2 py-1 rounded bg-white text-black" />
+    <input id="autoCashTarget" type="number" value="2.00" min="1.01" step="0.01"
+           class="w-20 text-right px-2 py-1 rounded bg-white text-black mx-2" />
+    <button id="startAuto"
+            class="px-4 py-2 rounded bg-green-500 text-black hover:bg-green-600">
+      Start Auto
+    </button>
+    <button id="stopAuto" disabled
+            class="px-4 py-2 rounded bg-green-500 text-black opacity-50 cursor-not-allowed ml-2">
+      Stop Auto
+    </button>
   </div>
 
   <!-- Message / Countdown -->
-  <div id="message"></div>
+  <div id="message" class="mt-4 text-xl min-h-[1.2em]"></div>
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
