@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – Aviator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Dashboard</h1>
+  <p>Your balance: <strong id="balance">$0.00</strong></p>
+
+  <form id="depositForm">
+    <label>
+      Deposit amount:
+      <input type="number" id="depositAmount" value="10.00" min="0.01" step="0.01" />
+    </label>
+    <button type="submit">Deposit</button>
+  </form>
+
+  <p><a href="/">Play Game</a> | <a href="/logout">Log out</a></p>
+
+  <script>
+    // Fetch and display balance
+    async function loadBalance() {
+      const res = await fetch('/api/balance');
+      const { balance } = await res.json();
+      document.getElementById('balance').textContent = '$' + balance.toFixed(2);
+    }
+
+    // Handle deposit form
+    document.getElementById('depositForm').onsubmit = async e => {
+      e.preventDefault();
+      const amt = parseFloat(document.getElementById('depositAmount').value);
+      await fetch('/api/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amt })
+      });
+      loadBalance();
+    };
+
+    loadBalance();
+  </script>
+</body>
+</html>
