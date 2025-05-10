@@ -1,24 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login – Aviator</title>
-  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Login</h1>
-  <form method="POST" action="/login">
-    <label>
-      Username<br/>
-      <input name="username" type="text" required />
-    </label><br/><br/>
-    <label>
-      Password<br/>
-      <input name="password" type="password" required />
-    </label><br/><br/>
-    <button type="submit">Log In</button>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-green-500 font-sans">
+
+  <h1 class="text-3xl mb-6">Login</h1>
+
+  <form method="POST" action="/login" class="flex flex-col space-y-4 w-64">
+    <label class="flex flex-col text-sm">
+      Username
+      <input name="username" type="text" required
+             class="mt-1 px-2 py-1 rounded text-black"/>
+    </label>
+    <label class="flex flex-col text-sm">
+      Password
+      <input name="password" type="password" required
+             class="mt-1 px-2 py-1 rounded text-black"/>
+    </label>
+    <button type="submit"
+            class="px-4 py-2 rounded bg-green-500 text-black hover:bg-green-600">
+      Log In
+    </button>
   </form>
-  <p>No account? <a href="/register">Sign up</a></p>
+
+  <p class="mt-4 text-sm">
+    No account?
+    <a href="/register" class="text-green-300 hover:underline">Sign up</a>
+  </p>
 </body>
 </html>
